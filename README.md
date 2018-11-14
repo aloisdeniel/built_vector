@@ -9,7 +9,7 @@ Generates Flutter vector code from minimalist SVG-like files.
 > pub global run built_vector -i <assets file path> -o <output dart file>
 ```
 
-A class named accordingly to your assets node's name, containing a 'void Paint(Canvas canvas, Size size, {Color fill})' function for each vector node.
+A class named accordingly to your assets node's name, containing a `void Paint(Canvas canvas, Size size, {Color fill})` function for each vector node.
 
 You can then use them with a custom painter, like with the [sample/lib/vectors.dart](sample/lib/vectors.dart) `Vector` widget.
 
