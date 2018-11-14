@@ -9,11 +9,11 @@ class Icons {
       paint.color = fill;
     }
     if (fill == null) {
-      paint.color = Color(0xff000000);
+      paint.color = Color(0xffc4c4c4);
     }
     canvas.drawRect((Rect.fromLTWH(0.0, 0.0, 31.000000, 28.000000)), paint);
     if (fill == null) {
-      paint.color = Color(0xff000000);
+      paint.color = Color(0xff9d9d9d);
     }
     canvas.drawRect(
         (Rect.fromLTWH(15.000000, 14.000000, 31.000000, 28.000000)), paint);

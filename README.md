@@ -4,11 +4,10 @@ Generates Flutter vector code from minimalist SVG-like files.
 
 ## Usage
 
-
 ```sh
-dart built_vector/bin/cli.dart -i <assets file path> -o <output dart file>
+> pub global activate built_vector
+> pub global run built_vector -i <assets file path> -o <output dart file>
 ```
-
 
 ## File format
 
@@ -67,5 +66,7 @@ It has several properties :
 To generate the sample, execute :
 
 ```sh
-dart built_vector/bin/cli.dart -i sample/assets/icons.assets -o sample/lib/icons.dart
+> pub global run built_vector -i sample/assets/icons.assets -o sample/lib/icons.dart
 ```
+
+ The [sample/lib/icons.dart](sample/lib/icons.dart) file is generated as [sample/lib/icons.dart](sample/lib/icons.dart).
