@@ -69,4 +69,4 @@ To generate the sample, execute :
 > pub global run built_vector -i sample/assets/icons.assets -o sample/lib/icons.dart
 ```
 
- The [sample/lib/icons.dart](sample/lib/icons.dart) file is generated as [sample/lib/icons.dart](sample/lib/icons.dart).
+ The [sample/assets/icons.assets](sample/assets/icons.assets) file is generated as [sample/lib/icons.dart](sample/lib/icons.dart).
