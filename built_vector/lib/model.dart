@@ -79,7 +79,7 @@ abstract class Definition {
 }
 
 class LinearGradient extends Definition {
-  final double x1, x2, y1, y2;
+  final Length x1, x2, y1, y2;
   final List<GradientStop> stops;
   LinearGradient(
       {@required String id,
@@ -91,15 +91,38 @@ class LinearGradient extends Definition {
       : super(id: id);
 }
 
-class Offset {
-  final double amount;
-  Offset(this.amount);
+class RadialGradient extends Definition {
+  final Length cx, cy, r;
+  final List<GradientStop> stops;
+  RadialGradient(
+      {@required String id,
+      @required this.cx,
+      @required this.cy,
+      @required this.r,
+      this.stops = const <GradientStop>[]})
+      : super(id: id);
 }
 
 class GradientStop {
-  final Offset offset;
+  final double offset;
   final double opacity;
   final Color color;
   GradientStop(
       {@required this.color, this.opacity = 1.0, @required this.offset});
+}
+
+class Length {
+  final double value;
+  final LengthType type;
+  Length.amount(double value)
+      : this.type = LengthType.amount,
+        this.value = value;
+  Length.absolute(double value)
+      : this.type = LengthType.absolute,
+        this.value = value;
+}
+
+enum LengthType {
+  amount,
+  absolute,
 }

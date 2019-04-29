@@ -33,16 +33,28 @@ class AssetsParser {
     assert(id != null, "an id must be precised for definitions");
 
     if (element.name.toString() == "linearGradient") {
-      var x1 = element.getAttribute("x1") ?? "0.0";
-      var x2 = element.getAttribute("x2") ?? "0.0";
-      var y1 = element.getAttribute("y1") ?? "0.0";
-      var y2 = element.getAttribute("y2") ?? "1.0";
+      var x1 = element.getAttribute("x1") ?? "0%";
+      var x2 = element.getAttribute("x2") ?? "100%";
+      var y1 = element.getAttribute("y1") ?? "0%";
+      var y2 = element.getAttribute("y2") ?? "0%";
       return LinearGradient(
           id: id,
-          x1: double.parse(x1),
-          x2: double.parse(x2),
-          y1: double.parse(y1),
-          y2: double.parse(y2),
+          x1: _parseLength(x1),
+          x2: _parseLength(x2),
+          y1: _parseLength(y1),
+          y2: _parseLength(y2),
+          stops: element.findAllElements("stop").map(_parseGradientStop));
+    }
+
+    if (element.name.toString() == "radialGradient") {
+      var cx = element.getAttribute("cx") ?? "50%";
+      var cy = element.getAttribute("x2") ?? "50%";
+      var r = element.getAttribute("r") ?? "50%";
+      return RadialGradient(
+          id: id,
+          cx: _parseLength(cx),
+          cy: _parseLength(cy),
+          r: _parseLength(r),
           stops: element.findAllElements("stop").map(_parseGradientStop));
     }
 
@@ -55,17 +67,30 @@ class AssetsParser {
     var opacity = element.getAttribute("stop-opacity") ?? "1.0";
     return GradientStop(
         color: Color(_parseColor(color)),
-        offset: _parseOffset(offset),
+        offset: _parseAmount(offset),
         opacity: double.parse(opacity ?? "1.0"));
   }
 
-  Offset _parseOffset(String value) {
-    if (value == null) return Offset(0.0);
+  Length _parseLength(String value) {
+    if (value == null) return Length.amount(0.0);
     value = value.trim();
     if (value.endsWith("%")) {
-      return Offset(double.parse(value.substring(0, value.length - 1)) / 100.0);
+      return Length.amount(
+          double.parse(value.substring(0, value.length - 1)).clamp(0.0, 100.0) /
+              100.0);
     }
-    return Offset(double.parse(value));
+    return Length.absolute(double.parse(value));
+  }
+
+  double _parseAmount(String value) {
+    if (value == null) return 0.0;
+    value = value.trim();
+    if (value.endsWith("%")) {
+      return double.parse(value.substring(0, value.length - 1))
+              .clamp(0.0, 100.0) /
+          100.0;
+    }
+    return double.parse(value).clamp(0.0, 1.0);
   }
 
   Vector _parseVector(xml.XmlElement element) {
