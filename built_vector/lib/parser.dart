@@ -108,7 +108,10 @@ class AssetsParser {
       throw Exception('A name must be precised for each vector');
     }
 
-    var fills = _childElements(element).map((x) => _parseShape(x, fill)).toList();
+    var fills = _childElements(element)
+      .map((x) => _parseShape(x, fill))
+      .expand<Shape>((element) => element != null ? [element] : [])
+      .toList();
     return Vector(name: name, fill: fill, viewBox: viewBox, fills: fills);
   }
 
@@ -136,7 +139,7 @@ class AssetsParser {
     throw Exception('A viewbox must be precised for each vector');
   }
 
-  Shape _parseShape(XmlElement element, Brush defaultFill) {
+  Shape? _parseShape(XmlElement element, Brush defaultFill) {
     var fill = _parseBrush(element.getAttribute("fill")) ?? defaultFill;
 
     if (element.name.toString() == "path") {
@@ -158,7 +161,7 @@ class AssetsParser {
       return Circle(fill: fill, centerX: cx, centerY: cy, radius: radius);
     }
 
-    throw UnimplementedError();
+    return null;
   }
 
   Brush? _parseBrush(String? value) {
