@@ -1,36 +1,39 @@
 import 'package:built_vector/model.dart';
-import 'package:xml/xml.dart' as xml;
+import 'package:xml/xml.dart';
 
-Iterable<xml.XmlElement> _childElements(xml.XmlElement element) =>
-    element.children.where((x) => x is xml.XmlElement).cast<xml.XmlElement>();
+Iterable<XmlElement> _childElements(XmlElement element) =>
+  element.children.where((x) => x is XmlElement).cast<XmlElement>();
 
 class AssetsParser {
   AssetsParser();
 
-  Assets parse(String content) {
-    if (content != null && content.isNotEmpty) {
-      var document = xml.parse(content);
-      var rootElement = document.rootElement;
-
-      if (rootElement?.name.toString() == 'assets') {
-        var name = rootElement.getAttribute("name");
-        assert(name != null, "a name must be precised for assets");
-        var definitions = rootElement
-            .findElements('defs')
-            .expand((x) => _childElements(x).map(_parseDefinition));
-
-        var vectors =
-            rootElement.findElements('vector').map(_parseVector).toList();
-        return Assets(name: name, vectors: vectors, definitions: definitions);
-      }
+  Assets parse(String? content) {
+    if (content == null || content.isEmpty) {
+      throw new Exception('Content must not be empty');
     }
 
-    return null;
+    var document = XmlDocument.parse(content);
+    var rootElement = document.rootElement;
+    if (rootElement.name.toString() != 'assets') {
+      throw new Exception('Root element must be assets');
+    }
+
+    var name = rootElement.getAttribute("name");
+    assert(name != null, "a name must be precised for assets");
+    var definitions = rootElement
+        .findElements('defs')
+        .expand((x) => _childElements(x).map(_parseDefinition));
+
+    var vectors =
+        rootElement.findElements('vector').map(_parseVector).toList();
+    return Assets(name: name!, vectors: vectors, definitions: definitions.toList());
   }
 
-  Definition _parseDefinition(xml.XmlElement element) {
+  Definition _parseDefinition(XmlElement element) {
     var id = element.getAttribute("id");
-    assert(id != null, "an id must be precised for definitions");
+    if (id == null) {
+      throw Exception('An id must be precised for definitions');
+    }
 
     if (element.name.toString() == "linearGradient") {
       var x1 = element.getAttribute("x1") ?? "0%";
@@ -38,12 +41,13 @@ class AssetsParser {
       var y1 = element.getAttribute("y1") ?? "0%";
       var y2 = element.getAttribute("y2") ?? "0%";
       return LinearGradient(
-          id: id,
-          x1: _parseLength(x1),
-          x2: _parseLength(x2),
-          y1: _parseLength(y1),
-          y2: _parseLength(y2),
-          stops: element.findAllElements("stop").map(_parseGradientStop));
+        id: id,
+        x1: _parseLength(x1),
+        x2: _parseLength(x2),
+        y1: _parseLength(y1),
+        y2: _parseLength(y2),
+        stops: element.findAllElements("stop").map(_parseGradientStop).toList()
+      );
     }
 
     if (element.name.toString() == "radialGradient") {
@@ -51,24 +55,26 @@ class AssetsParser {
       var cy = element.getAttribute("x2") ?? "50%";
       var r = element.getAttribute("r") ?? "50%";
       return RadialGradient(
-          id: id,
-          cx: _parseLength(cx),
-          cy: _parseLength(cy),
-          r: _parseLength(r),
-          stops: element.findAllElements("stop").map(_parseGradientStop));
+        id: id,
+        cx: _parseLength(cx),
+        cy: _parseLength(cy),
+        r: _parseLength(r),
+        stops: element.findAllElements("stop").map(_parseGradientStop).toList()
+      );
     }
 
-    return null;
+    throw UnimplementedError();
   }
 
-  GradientStop _parseGradientStop(xml.XmlElement element) {
+  GradientStop _parseGradientStop(XmlElement element) {
     var color = element.getAttribute("stop-color") ?? "#000000";
     var offset = element.getAttribute("offset") ?? "0.0";
     var opacity = element.getAttribute("stop-opacity") ?? "1.0";
     return GradientStop(
-        color: Color(_parseColor(color)),
-        offset: _parseAmount(offset),
-        opacity: double.parse(opacity ?? "1.0"));
+      color: Color(_parseColor(color)),
+      offset: _parseAmount(offset),
+      opacity: double.parse(opacity)
+    );
   }
 
   Length _parseLength(String value) {
@@ -93,18 +99,27 @@ class AssetsParser {
     return double.parse(value).clamp(0.0, 1.0);
   }
 
-  Vector _parseVector(xml.XmlElement element) {
+  Vector _parseVector(XmlElement element) {
     var name = element.getAttribute("name");
     var fill = _parseBrush(element.getAttribute("fill")) ?? Color(0xFF000000);
     var viewBox = _parseViewBox(element.getAttribute("viewBox"));
-    assert(name != null, "a name must be precised for each vector");
-    assert(viewBox != null, "a viewBox must be precised for each vector");
-    var fills =
-        _childElements(element).map((x) => _parseShape(x, fill)).toList();
+
+    if (name == null) {
+      throw Exception('A name must be precised for each vector');
+    }
+
+    var fills = _childElements(element)
+      .map((x) => _parseShape(x, fill))
+      .expand<Shape>((element) => element != null ? [element] : [])
+      .toList();
     return Vector(name: name, fill: fill, viewBox: viewBox, fills: fills);
   }
 
-  ViewBox _parseViewBox(String value) {
+  ViewBox _parseViewBox(String? value) {
+    if (value == null) {
+      throw Exception('Viewbox cannot be empty');
+    }
+
     var split = value.split(" ").where((v) => !v.isEmpty).toList();
     if (split.length > 3) {
       return ViewBox(
@@ -114,7 +129,6 @@ class AssetsParser {
         height: double.parse(split[3]),
       );
     }
-
     if (split.length > 1) {
       return ViewBox(
           x: 0.0,
@@ -122,16 +136,17 @@ class AssetsParser {
           width: double.parse(split[2]),
           height: double.parse(split[3]));
     }
-
-    return null;
+    throw Exception('A viewbox must be precised for each vector');
   }
 
-  Shape _parseShape(xml.XmlElement element, Brush defaultFill) {
+  Shape? _parseShape(XmlElement element, Brush defaultFill) {
     var fill = _parseBrush(element.getAttribute("fill")) ?? defaultFill;
 
     if (element.name.toString() == "path") {
       var data = element.getAttribute("d");
-      assert(data != null, "data ('d') must be precised for all paths");
+      if (data == null) {
+        throw Exception("Data ('d') must be precised for all paths");
+      }
       return Path(fill: fill, data: data);
     } else if (element.name.toString() == "rect") {
       var x = double.parse(element.getAttribute("x") ?? "0.0");
@@ -149,13 +164,14 @@ class AssetsParser {
     return null;
   }
 
-  Brush _parseBrush(String value) {
-    if (value != null && value.isNotEmpty) {
-      if (value.startsWith("#")) {
-        return Color(_parseColor(value));
-      }
+  Brush? _parseBrush(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
     }
-    return null;
+    if (!value.startsWith("#")) {
+      return null;
+    }
+    return Color(_parseColor(value));
   }
 
   int _parseColor(String v) {
